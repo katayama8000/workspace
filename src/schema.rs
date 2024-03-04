@@ -11,3 +11,19 @@ diesel::table! {
         commonwealth_status -> Varchar,
     }
 }
+
+diesel::table! {
+    bird_sighting (id) {
+        id -> Integer,
+        bird_id -> Integer,
+        sighting_date -> Nullable<Timestamp>,
+        #[max_length = 255]
+        sighting_location -> Nullable<Varchar>,
+        additional_information -> Nullable<Text>,
+    }
+}
+
+diesel::allow_tables_to_appear_in_same_query!(
+    bird,
+    bird_sighting,
+);
