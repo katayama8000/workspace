@@ -1,0 +1,24 @@
+{
+  "dockerComposeFile": [
+    "compose.yml"
+  ],
+  "service": "manage-money-api",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "tamasfe.even-better-toml",
+        "GitHub.copilot",
+        "ms-azuretools.vscode-docker",
+        "rust-lang.rust-analyzer",
+        "serayuzgur.crates",
+        "adpyke.vscode-sql-formatter"
+      ],
+      "settings": {
+        "files.watcherExclude": {
+          "**/target/**": true
+        }
+      }
+    }
+  }
+}
