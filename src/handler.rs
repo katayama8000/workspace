@@ -1,16 +1,19 @@
+use std::sync::{Arc, Mutex};
+
+use axum::extract::State;
 use diesel::prelude::*;
 use rocket::response::status::NoContent;
 use rocket::serde::json::Json;
 
-use crate::database;
-use crate::models::*;
+use crate::{establish_connection, models::*, AppState};
 
-pub fn index() -> Json<Vec<Bird>> {
+pub fn index(state: State<Arc<AppState>>) -> Result<Json<Vec<Bird>>, diesel::result::Error> {
     use crate::schema::bird::dsl::bird;
-    let connection = &mut database::establish_connection();
-    bird.load::<Bird>(connection)
-        .map(Json)
-        .expect("Error loading birds")
+
+    let conn = state.pool.lock().unwrap();
+    let mut pool = establish_connection();
+    let birds = bird.load::<Bird>(&pool)?;
+    Ok(Json(birds))
 }
 
 pub fn new_sighting(sighting: Json<BirdSightingInput>) -> Json<BirdSighting> {

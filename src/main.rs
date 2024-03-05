@@ -1,6 +1,6 @@
 use shuttle_secrets::SecretStore;
 
-mod controller;
+mod handler;
 mod models;
 mod schema;
 
@@ -29,12 +29,11 @@ struct AppState {
 
 #[shuttle_runtime::main]
 async fn main(#[shuttle_secrets::Secrets] secret_store: SecretStore) -> shuttle_axum::ShuttleAxum {
-    let database_url = secret_store
-        .get("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
+    // let database_url = secret_store
+    //     .get("DATABASE_URL")
+    //     .expect("DATABASE_URL must be set");
 
-    let pool = MysqlConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url));
+    let pool = establish_connection();
 
     let state = Arc::new(AppState {
         pool: Arc::new(Mutex::new(pool)),
