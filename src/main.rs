@@ -4,45 +4,35 @@ mod handler;
 mod models;
 mod schema;
 
-use std::{
-    env,
-    sync::{Arc, Mutex},
-};
-
 use diesel::prelude::*;
-use dotenvy::dotenv;
+use diesel::r2d2::ConnectionManager;
+use diesel::r2d2::Pool;
 
-pub fn establish_connection() -> MysqlConnection {
-    dotenv().ok();
-
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-
-    MysqlConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+pub fn get_connection_pool(database_url: String) -> Pool<ConnectionManager<MysqlConnection>> {
+    let manager = ConnectionManager::<MysqlConnection>::new(database_url);
+    // Refer to the `r2d2` documentation for more methods to use
+    // when building a connection pool
+    Pool::builder()
+        .test_on_check_out(true)
+        .build(manager)
+        .expect("Could not build connection pool")
 }
 
 use axum::{routing::get, Router};
 
+#[derive(Clone)]
 struct AppState {
-    pool: Arc<Mutex<MysqlConnection>>,
+    pool: Pool<ConnectionManager<MysqlConnection>>,
 }
 
 #[shuttle_runtime::main]
 async fn main(#[shuttle_secrets::Secrets] secret_store: SecretStore) -> shuttle_axum::ShuttleAxum {
-    // let database_url = secret_store
-    //     .get("DATABASE_URL")
-    //     .expect("DATABASE_URL must be set");
-
-    let pool = establish_connection();
-
-    let state = Arc::new(AppState {
-        pool: Arc::new(Mutex::new(pool)),
-    });
-
-    let router = Router::new()
-        .route("/", get(hello_world))
-        .with_state(state.clone());
-
+    let database_url = secret_store
+        .get("DATABASE_URL")
+        .expect("DATABASE_URL must be set");
+    let pool = get_connection_pool(database_url);
+    let state = AppState { pool };
+    let router = Router::new().route("/", get(hello_world)).with_state(state);
     Ok(router.into())
 }
 

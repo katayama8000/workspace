@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 chrono = { version = "0.4.24", features = ["serde"] }
-diesel = { version = "2.0.0", features = ["mysql", "chrono"] }
+diesel = { version = "2.0.0", features = ["mysql", "chrono", "r2d2"] }
 dotenvy = "0.15"
 rocket = { version = "0.5.0-rc.2", features = ["json"] }
 serde = { version = "1.0.193", features = ["derive"] }
@@ -23,8 +23,8 @@ sqlx = { version = "0.7.3", features = [
     "runtime-tokio-native-tls",
     "chrono",
 ] }
-shuttle-axum = "0.39.0"
-shuttle-runtime = "0.39.0"
+shuttle-axum = "0.40.0"
+shuttle-runtime = "0.40.0"
 tracing = "0.1.40"
-shuttle-secrets = "0.39.0"
+shuttle-secrets = "0.40.0"
 rand = "0.8.5"
