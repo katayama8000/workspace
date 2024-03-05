@@ -1,8 +1,11 @@
+use axum::extract::State;
 use shuttle_secrets::SecretStore;
 
 mod handler;
 mod models;
 mod schema;
+
+use handler::get_birds;
 
 use diesel::prelude::*;
 use diesel::r2d2::ConnectionManager;
@@ -32,10 +35,13 @@ async fn main(#[shuttle_secrets::Secrets] secret_store: SecretStore) -> shuttle_
         .expect("DATABASE_URL must be set");
     let pool = get_connection_pool(database_url);
     let state = AppState { pool };
-    let router = Router::new().route("/", get(hello_world)).with_state(state);
+    let router = Router::new()
+        .route("/", get(hello_world))
+        .route("/birds", get(get_birds))
+        .with_state(state);
     Ok(router.into())
 }
 
-async fn hello_world() -> &'static str {
+async fn hello_world(State(state): State<AppState>) -> &'static str {
     "Hello, world!"
 }

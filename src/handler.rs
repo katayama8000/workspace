@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use axum::extract::State;
 use diesel::prelude::*;
 use rocket::response::status::NoContent;
@@ -7,15 +5,19 @@ use rocket::serde::json::Json;
 
 use crate::{models::*, AppState};
 
-pub fn index(state: State<Arc<AppState>>) -> Result<Json<Vec<Bird>>, diesel::result::Error> {
+pub async fn get_birds(State(state): State<AppState>) -> String {
     use crate::schema::bird::dsl::bird;
     let mut connection = state.pool.get().unwrap();
-    let results = bird.load::<Bird>(&mut connection)?;
-    Ok(Json(results))
+    let results = bird
+        .load::<Bird>(&mut connection)
+        .expect("Error loading birds");
+
+    "Hello, world!".to_string()
+    // Ok(Json(results))
 }
 
-pub fn new_sighting(
-    state: State<Arc<AppState>>,
+pub async fn new_sighting(
+    State(state): State<AppState>,
     sighting: Json<BirdSightingInput>,
 ) -> Json<BirdSighting> {
     use crate::schema::bird_sighting;
@@ -34,7 +36,10 @@ pub fn new_sighting(
     )
 }
 
-pub fn all_sightings(state: State<Arc<AppState>>, bird: Option<i32>) -> Json<Vec<BirdSighting>> {
+pub async fn all_sightings(
+    State(state): State<AppState>,
+    bird: Option<i32>,
+) -> Json<Vec<BirdSighting>> {
     let connection = &mut state.pool.get().unwrap();
     use crate::schema::bird_sighting::dsl::{bird_id, bird_sighting};
 
@@ -46,7 +51,7 @@ pub fn all_sightings(state: State<Arc<AppState>>, bird: Option<i32>) -> Json<Vec
     query_result.map(Json).expect("Error loading sightings")
 }
 
-pub fn delete_sighting(state: State<Arc<AppState>>, sighting_id: i32) -> NoContent {
+pub async fn delete_sighting(State(state): State<AppState>, sighting_id: i32) -> NoContent {
     use crate::schema::bird_sighting::dsl::*;
 
     let connection = &mut state.pool.get().unwrap();
