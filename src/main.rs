@@ -1,46 +1,69 @@
-use postgres::Client;
-
-use openssl::ssl::{SslConnector, SslMethod};
-
-use postgres_openssl::MakeTlsConnector;
-
+use axum::{extract::State, http::StatusCode, response::IntoResponse, routing::get, Router};
+use dotenv::dotenv;
+use sqlx::Pool;
+use sqlx::Row;
+use std::env;
 use std::error;
 
-fn main() -> Result<(), Box<dyn error::Error>> {
-    let builder = SslConnector::builder(SslMethod::tls())?;
+#[derive(Clone)]
+struct AppState {
+    pool: Pool<sqlx::Postgres>,
+}
 
-    let connector = MakeTlsConnector::new(builder.build());
+async fn connect() -> Result<Pool<sqlx::Postgres>, sqlx::Error> {
+    dotenv().ok();
+    let db_user = env::var("DB_USER").expect("DB_USER must be set in the .env file");
+    let db_password = env::var("DB_PASSWORD").expect("DB_PASSWORD must be set in the .env file");
+    let db_host = env::var("DB_HOST").expect("DB_HOST must be set in the .env file");
+    let db_name = env::var("DB_NAME").expect("DB_NAME must be set in the .env file");
+    let database_url = format!(
+        "postgres://{}:{}@{}/{}?sslmode=require",
+        db_user, db_password, db_host, db_name
+    );
+    println!("Connecting to {}", database_url);
+    let pool = sqlx::postgres::PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&database_url)
+        .await?;
+    Ok(pool)
+}
 
-    let mut client = Client::connect(
-        "postgresql://rustdb_owner:Hfgapn6vAO4c@ep-hidden-mouse-a547c3w0.us-east-2.aws.neon.tech/rustdb?sslmode=require",
-        connector,
-    )?;
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn error::Error>> {
+    let pool = connect().await.expect("database should connect");
+    let state = AppState { pool };
 
-    // select * from rustdb.rust_table;
-    for row in client.query("SELECT * FROM playing_with_neon", &[])? {
-        // println!("Found row: {:?}", row);
-        println!("id {}", row.get::<_, i32>(0));
-        println!("name {}", row.get::<_, String>(1));
-        // println!("value {}", row.get::<_, f32>(2));
-    }
-
-    // insert
-    client.execute(
-        "INSERT INTO playing_with_neon (name , value) VALUES ($1, $2)",
-        &[&"test", &(1.0 as f32)],
-    )?;
-
-    // // update
-    client.execute(
-        "UPDATE playing_with_neon SET name = $1 WHERE id = $2",
-        &[&"test2", &(1 as i32)],
-    )?;
-
-    // delete id 11
-    client.execute(
-        "DELETE FROM playing_with_neon WHERE id = $1",
-        &[&(13 as i32)],
-    )?;
+    let app = Router::new()
+        .route("/", get(|| async { println!("hello") }))
+        .route("/items", get(handle_get_all_items))
+        .with_state(state);
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:8080")
+        .await
+        .unwrap();
+    println!("Listening on: {}", listener.local_addr().unwrap());
+    axum::serve(listener, app).await.unwrap();
 
     Ok(())
+}
+
+async fn handle_get_all_items(State(state): State<AppState>) -> impl IntoResponse {
+    println!("GET /");
+    let rows = match sqlx::query("SELECT * FROM playing_with_neon")
+        .fetch_all(&state.pool)
+        .await
+    {
+        Ok(rows) => rows,
+        Err(e) => {
+            eprintln!("Failed to fetch items: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to fetch").into_response();
+        }
+    };
+    println!("Got {} items", rows.len());
+    for row in rows {
+        let id: i32 = row.get("id");
+        let name: String = row.get("name");
+        println!("Item {}: {}", id, name);
+    }
+
+    (StatusCode::OK).into_response()
 }
