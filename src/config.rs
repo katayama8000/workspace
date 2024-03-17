@@ -40,7 +40,7 @@ impl DbConfig {
         }
     }
 
-    fn connection_string(&self) -> String {
+    fn connection(&self) -> String {
         format!(
             "postgres://{}:{}@{}/{}?sslmode=require",
             self.db_user, self.db_password, self.db_host, self.db_name
@@ -50,7 +50,7 @@ impl DbConfig {
 
 pub async fn connect() -> Result<PgPool, sqlx::Error> {
     let config = DbConfig::from_env();
-    let database_url = config.connection_string();
+    let database_url = config.connection();
 
     println!("Connecting to {}", database_url);
     let pool = sqlx::postgres::PgPoolOptions::new()
