@@ -1,32 +1,15 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, routing::get, Router};
-use dotenv::dotenv;
 use sqlx::Pool;
 use sqlx::Row;
 use std::env;
 use std::error;
 
+use crate::config::connect;
+mod config;
+
 #[derive(Clone)]
 struct AppState {
     pool: Pool<sqlx::Postgres>,
-}
-
-async fn connect() -> Result<Pool<sqlx::Postgres>, sqlx::Error> {
-    dotenv().ok();
-    let db_user = env::var("DB_USER_DEV").expect("DB_USER must be set in the .env file");
-    let db_password =
-        env::var("DB_PASSWORD_DEV").expect("DB_PASSWORD must be set in the .env file");
-    let db_host = env::var("DB_HOST_DEV").expect("DB_HOST must be set in the .env file");
-    let db_name = env::var("DB_NAME_DEV").expect("DB_NAME must be set in the .env file");
-    let database_url = format!(
-        "postgres://{}:{}@{}/{}?sslmode=require",
-        db_user, db_password, db_host, db_name
-    );
-    println!("Connecting to {}", database_url);
-    let pool = sqlx::postgres::PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&database_url)
-        .await?;
-    Ok(pool)
 }
 
 #[tokio::main]
