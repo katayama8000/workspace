@@ -7,6 +7,6 @@
 - [neon](https://neon.tech/)
   - The fully managed serverless Postgres with a generous free tier.
 
-## [ER diagram](https://dbdiagram.io/home) (sample)
+## [ER diagram](https://dbdiagram.io/home)
 
 ![neon](img/er.png)
