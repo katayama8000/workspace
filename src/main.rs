@@ -18,11 +18,8 @@ async fn main() -> Result<(), Box<dyn error::Error>> {
     let state = AppState { pool };
 
     let app = Router::new()
-        .route(
-            "/",
-            get(|| async { (StatusCode::OK, "Hello, World from Axum!") }),
-        )
-        .route("/version", get(handle_get_version))
+        .route("/", get(handle_get_version))
+        .route("/env", get(handle_get_env))
         .route("/user", get(handle_get_user))
         .route("/bill", get(handle_get_monthly_bill))
         .route("/bill/details", get(handle_get_bill_details))
@@ -31,7 +28,7 @@ async fn main() -> Result<(), Box<dyn error::Error>> {
         .await
         .expect("expecr to bind port");
     println!(
-        "Listening on: {}",
+        "🔥🔥🔥Listening on: {}🔥🔥🔥",
         listener.local_addr().expect("expect to get local address")
     );
     axum::serve(listener, app).await.expect("server should run");
@@ -42,6 +39,11 @@ async fn main() -> Result<(), Box<dyn error::Error>> {
 async fn handle_get_version() -> String {
     let version = env!("CARGO_PKG_VERSION");
     format!("Version: {}", version)
+}
+
+async fn handle_get_env() -> String {
+    let env = env::var("ENV").expect("ENV must be set in the .env file");
+    format!("Environment: {}", env)
 }
 
 async fn handle_get_user(State(state): State<AppState>) -> impl IntoResponse {
