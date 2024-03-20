@@ -1,4 +1,10 @@
-use axum::{extract::State, http::StatusCode, response::IntoResponse};
+use axum::{
+    extract::{Path, State},
+    http::StatusCode,
+    response::IntoResponse,
+};
+use chrono::{DateTime, Datelike, TimeZone, Utc};
+use chrono_tz::{Asia::Tokyo, Tz};
 use sqlx::Row;
 use std::env;
 
@@ -35,8 +41,18 @@ pub async fn handle_get_user(State(state): State<AppState>) -> impl IntoResponse
     (StatusCode::OK).into_response()
 }
 
-pub async fn handle_get_monthly_bill(State(state): State<AppState>) -> impl IntoResponse {
+pub async fn handle_get_monthly_bill(
+    State(state): State<AppState>,
+    Path(month): Path<String>,
+) -> impl IntoResponse {
+    println!("Month: {}", month);
     let month = "June";
+    // get tokyo time
+    let utc = Utc::now().naive_utc();
+    let jst: DateTime<Tz> = Tokyo.from_utc_datetime(&utc).with_timezone(&Tokyo);
+    println!("Tokyo time: {}", jst);
+    let jst_month = jst.month();
+    println!("Tokyo month: {}", jst_month);
 
     let row = match sqlx::query("SELECT * FROM monthlybills WHERE month = $1")
         .bind(month)
