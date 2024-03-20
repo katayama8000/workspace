@@ -29,9 +29,12 @@ async fn main() -> Result<(), Box<dyn error::Error>> {
         .with_state(state);
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8080")
         .await
-        .unwrap();
-    println!("Listening on: {}", listener.local_addr().unwrap());
-    axum::serve(listener, app).await.unwrap();
+        .expect("expecr to bind port");
+    println!(
+        "Listening on: {}",
+        listener.local_addr().expect("expect to get local address")
+    );
+    axum::serve(listener, app).await.expect("server should run");
 
     Ok(())
 }
