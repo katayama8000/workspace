@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS BillDetails (
     quantity INT
 );
 
-CREATE TABLE IF NOT EXISTS RecurringExpenses (
+CREATE TABLE IF NOT EXISTS RecurringBills (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES Users(id),
     name VARCHAR(255) NOT NULL,
@@ -48,7 +48,7 @@ VALUES
     (1, 'Internet', 20, 1);
 
 INSERT INTO
-    RecurringExpenses (user_id, name, amount)
+    RecurringBills (user_id, name, amount)
 VALUES
     (1, 'Rent', 500),
     (1, 'Groceries', 200);
